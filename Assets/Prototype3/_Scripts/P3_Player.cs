@@ -11,31 +11,31 @@ public class P3_Player : MonoBehaviour
     [SerializeField] private float maxVelocity;
     //decelerationSmoothnes: This is a value that will "stop" the rigidbody velocity to be greater than the maxVelocity. The greater this value, the smoother the deceleration
     [Range(0.9f, 0.99f)]
-    [SerializeField] private float decelerationSmoothnes; 
+    [SerializeField] private float decelerationSmoothnes;
     [Header("Impulse machine settings")]
     [SerializeField] private float impulseForce;
     [SerializeField] private int maxHeat;
     [SerializeField] private float overheatCooldown;
     [Space]
-    [SerializeField] private float reduceHeatTimeRate; //the delay between each amount of heat reduced
+    [SerializeField] private float coolingTimeRate; //the delay between each amount of heat reduced
     [SerializeField] private int heatToReduce; //This is the heat amount to reduce every X (reduceHeatTimeRate) seconds
     [Space]
     [SerializeField] private float increaseHeatTimeRate; //the delay between each amount of heat increased
     [SerializeField] private int heatToIncrease; //This is the heat amount to increase every X (increaseHeatTimeRate) seconds when using the machine
-
     [Header("Other settings")]
     [SerializeField] private Image UI_HeatBar;
     [SerializeField] private Joystick joystick;
 
     private int currentHeat = 0;
-    private float machineCurrentUseTime = 0f;
-    private float overheatCurrentTime = 0f;
+    private int lastHeat = 0;
+    private float heatingTimer = 0f; 
+    private float coolingTimer = 0f; 
+    private float overheatCurrentTime = 0f; //The amount of time that the machine has been in Overheat state
     private bool firstTap = true;
     private bool isOverheated = false;
 
     private Rigidbody2D rigidB;
     private Collider2D playerCollider;
-    private Camera cam;
     private float camHorizontalExtents; //cam width
 
     void Start()
@@ -43,12 +43,10 @@ public class P3_Player : MonoBehaviour
         #region GET COMPONENTS
         rigidB = GetComponent<Rigidbody2D>();
         playerCollider = GetComponent<Collider2D>();
-        cam = Camera.main;
         #endregion
 
         //Get cam horizontal extents
-        camHorizontalExtents = cam.orthographicSize * Screen.width / Screen.height;
-        print("Cam extents: " + camHorizontalExtents);
+        camHorizontalExtents = P3_GameManager.Instance.camHorizontalExtents;
 
         #region VARIABLES SETUP
         maxVelocity *= maxVelocity;
@@ -72,24 +70,31 @@ public class P3_Player : MonoBehaviour
             overheatCurrentTime += Time.deltaTime;
 
             if (overheatCurrentTime >= overheatCooldown)
+            {
                 isOverheated = false;
+                overheatCurrentTime = 0f;
+            }
 
+            //The player can not keep moving if the machine is overheated
             return;
         }
         #endregion
 
         #region FUEL LOGIC
+        lastHeat = CurrentHeat; //Store the last heat amount
+
         if (joystick.Direction != Vector2.zero)
         {
             //If it is not the first tap, then start adding heat over time
             if (!firstTap)
             {
-                machineCurrentUseTime += Time.deltaTime;
+                heatingTimer += Time.deltaTime;
 
-                if (machineCurrentUseTime >= increaseHeatTimeRate)
+                //heat up the machine at a specific time rate.
+                if (heatingTimer >= increaseHeatTimeRate)
                 {
                     CurrentHeat += heatToIncrease;
-                    machineCurrentUseTime = 0f;
+                    heatingTimer = 0f;
                 }
             }
             else //If it is the first tap, increase heat by default 
@@ -97,21 +102,32 @@ public class P3_Player : MonoBehaviour
                 firstTap = false;
                 CurrentHeat += heatToIncrease;
             }
-
-            //Update heat bar
-            UI_HeatBar.fillAmount = (float)CurrentHeat / maxHeat;
+            
         }
         else
         {
             firstTap = true;
-            machineCurrentUseTime = 0f;
+            heatingTimer = 0f;
+
+            #region MACHINE COOLING
+            coolingTimer += Time.deltaTime;
+            //Cooldown the machine at a specific time rate.
+            if (coolingTimer >= coolingTimeRate && CurrentHeat != 0)
+            {
+                CurrentHeat -= heatToReduce;
+                coolingTimer = 0f;
+            }
+            #endregion
         }
         #endregion
-     
+
     }
 
     private void FixedUpdate()
     {
+        //Update current distance traveled
+        P3_GameManager.Instance.CurrentDistanceTraveled = (int)transform.position.y;
+
         //Avoid player going faster than the maxVelocity
         if (rigidB.velocity.sqrMagnitude > maxVelocity)
             rigidB.velocity *= 0.95f; //smoothness of the slowdown is controlled by this, 
@@ -123,6 +139,25 @@ public class P3_Player : MonoBehaviour
         //Add force using the joystick direction
         if (joystick.Direction != Vector2.zero)
             rigidB.AddForce(-joystick.Direction * impulseForce, ForceMode2D.Impulse);
+
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Finish"))
+        {
+            P3_GameManager.Instance.RestartGame();
+        }
+    }
+
+    private void UpdateHeatBarUI()
+    {
+        if (CurrentHeat != lastHeat)
+        {
+            //Update heat bar
+            UI_HeatBar.fillAmount = (float)CurrentHeat / maxHeat;
+            //print("Updating Heatbar UI");
+        }
     }
 
     public int CurrentHeat
@@ -138,6 +173,10 @@ public class P3_Player : MonoBehaviour
             }
             else if (currentHeat <= 0)
                 currentHeat = 0;
+
+            UpdateHeatBarUI();
         }
     }
+
+
 }
