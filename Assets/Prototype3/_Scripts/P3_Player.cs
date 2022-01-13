@@ -22,8 +22,11 @@ public class P3_Player : MonoBehaviour
     [Space]
     [SerializeField] private float increaseHeatTimeRate; //the delay between each amount of heat increased
     [SerializeField] private int heatToIncrease; //This is the heat amount to increase every X (increaseHeatTimeRate) seconds when using the machine
-    [Header("Other settings")]
+    [Header("Other attributes")]
     [SerializeField] private Image UI_HeatBar;
+    [SerializeField] private GameObject steamParticlesPivot;
+    [SerializeField] private ParticleSystem steamParticlesSystem;
+
     [SerializeField] private Joystick joystick;
 
     private int currentHeat = 0;
@@ -33,6 +36,7 @@ public class P3_Player : MonoBehaviour
     private float overheatCurrentTime = 0f; //The amount of time that the machine has been in Overheat state
     private bool firstTap = true;
     private bool isOverheated = false;
+    private float impulseAngle;
 
     private Rigidbody2D rigidB;
     private Collider2D playerCollider;
@@ -67,6 +71,9 @@ public class P3_Player : MonoBehaviour
         #region CHECK OVERHEAT STATE
         if (isOverheated)
         {
+            if (steamParticlesSystem.isPlaying)
+                steamParticlesSystem.Stop();
+
             overheatCurrentTime += Time.deltaTime;
 
             if (overheatCurrentTime >= overheatCooldown)
@@ -102,7 +109,14 @@ public class P3_Player : MonoBehaviour
                 firstTap = false;
                 CurrentHeat += heatToIncrease;
             }
-            
+
+            #region STEAM PARTICLE SYSTEM
+            if(!steamParticlesSystem.isEmitting)
+                steamParticlesSystem.Play();
+
+            impulseAngle = -Mathf.Atan2(-joystick.Direction.x, -joystick.Direction.y) * Mathf.Rad2Deg;
+            steamParticlesPivot.transform.eulerAngles = new Vector3(0f, 0f, impulseAngle);
+            #endregion
         }
         else
         {
@@ -118,6 +132,10 @@ public class P3_Player : MonoBehaviour
                 coolingTimer = 0f;
             }
             #endregion
+
+            //Stop steam particle system
+            if (steamParticlesSystem.isPlaying)
+                steamParticlesSystem.Stop();
         }
         #endregion
 
@@ -130,7 +148,7 @@ public class P3_Player : MonoBehaviour
 
         //Avoid player going faster than the maxVelocity
         if (rigidB.velocity.sqrMagnitude > maxVelocity)
-            rigidB.velocity *= 0.95f; //smoothness of the slowdown is controlled by this, 
+            rigidB.velocity *= decelerationSmoothnes; //smoothness of the slowdown is controlled by this, 
 
         //Avoid the player to move when the machine is overheated
         if (isOverheated)
@@ -146,7 +164,7 @@ public class P3_Player : MonoBehaviour
     {
         if (collision.CompareTag("Finish"))
         {
-            P3_GameManager.Instance.RestartGame();
+            P3_GameManager.Instance.GameOver();
         }
     }
 

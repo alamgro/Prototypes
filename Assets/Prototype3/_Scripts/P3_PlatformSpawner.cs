@@ -45,7 +45,7 @@ public class P3_PlatformSpawner : MonoBehaviour
         //Random position
         Vector2 spawnPosition;
         spawnPosition.x = Random.Range(-P3_GameManager.Instance.camHorizontalExtents, P3_GameManager.Instance.camHorizontalExtents);
-        spawnPosition.y = lastPlatformHeight += Random.Range(minSpawnHeight, maxSpawnHeight);
+        spawnPosition.y = lastPlatformHeight += Random.Range(P3_GameManager.Instance.CurrentMinSpawnHeight, maxSpawnHeight);
         //Store last height where a platform was spawned
         lastPlatformHeight = spawnPosition.y;
 
