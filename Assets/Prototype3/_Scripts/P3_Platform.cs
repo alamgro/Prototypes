@@ -4,10 +4,15 @@ using UnityEngine;
 
 public class P3_Platform : MonoBehaviour
 {
-    [SerializeField] private float timeToFall;
-
+    private Rigidbody2D rigidB;
+    private float timeToFall;
     private float fallTimer = 0f;
     private bool fall = false;
+
+    private void Start()
+    {
+        rigidB = GetComponent<Rigidbody2D>();
+    }
 
     void Update()
     {
@@ -16,7 +21,7 @@ public class P3_Platform : MonoBehaviour
             fallTimer += Time.deltaTime;
             if(fallTimer >= timeToFall)
             {
-                DespawnPlatform();
+                rigidB.isKinematic = false;
             }
         }
     }
@@ -32,8 +37,12 @@ public class P3_Platform : MonoBehaviour
                 fall = true;
             }
         }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
         //Collision with the respawn collider
-        if (collision.gameObject.CompareTag("Respawn"))
+        if (collision.CompareTag("Respawn"))
         {
             DespawnPlatform();
         }
@@ -42,8 +51,15 @@ public class P3_Platform : MonoBehaviour
     private void DespawnPlatform()
     {
         fall = false;
-        P3_GameManager.Instance.platformSpawner.SpawnPlatform();
-        P3_GameManager.Instance.RelocateFallCollider(transform.position);
+        fallTimer = 0f;
+        P3_GameManager.Instance.platformSpawner.SpawnPlatform(); //Spawn other platform
+        P3_GameManager.Instance.RelocateFallCollider(transform.position); //Move falling area
+        rigidB.isKinematic = true;
         gameObject.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        timeToFall = P3_GameManager.Instance.CurrentPlatformLifetime;
     }
 }

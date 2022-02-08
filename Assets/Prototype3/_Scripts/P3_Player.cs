@@ -114,7 +114,11 @@ public class P3_Player : MonoBehaviour
             if(!steamParticlesSystem.isEmitting)
                 steamParticlesSystem.Play();
 
-            impulseAngle = -Mathf.Atan2(-joystick.Direction.x, -joystick.Direction.y) * Mathf.Rad2Deg;
+            if(P3_GameManager.Instance.InvertedController)
+                impulseAngle = -Mathf.Atan2(joystick.Direction.x, joystick.Direction.y) * Mathf.Rad2Deg;
+            else
+                impulseAngle = -Mathf.Atan2(-joystick.Direction.x, -joystick.Direction.y) * Mathf.Rad2Deg;
+            
             steamParticlesPivot.transform.eulerAngles = new Vector3(0f, 0f, impulseAngle);
             #endregion
         }
@@ -156,7 +160,15 @@ public class P3_Player : MonoBehaviour
 
         //Add force using the joystick direction
         if (joystick.Direction != Vector2.zero)
-            rigidB.AddForce(-joystick.Direction * impulseForce, ForceMode2D.Impulse);
+        {
+            if(P3_GameManager.Instance.InvertedController)
+                rigidB.AddForce(joystick.Direction * impulseForce, ForceMode2D.Impulse);
+            else
+                rigidB.AddForce(-joystick.Direction * impulseForce, ForceMode2D.Impulse);
+
+        }
+
+        
 
     }
 
