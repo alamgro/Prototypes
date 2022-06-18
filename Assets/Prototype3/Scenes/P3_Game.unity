@@ -7374,7 +7374,7 @@ MonoBehaviour:
   m_Follow: {fileID: 582181117}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 21.66667
+    OrthographicSize: 18
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -14151,7 +14151,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.4206123, g: 0.50651675, b: 0.6415094, a: 0}
+  m_BackGroundColor: {r: 0.2728729, g: 0.4694707, b: 0.7924528, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -14168,7 +14168,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 21.66667
+  orthographic size: 18
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
