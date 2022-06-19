@@ -34,7 +34,7 @@ public class P5_Crushable : MonoBehaviour
 
         if (currentImpactForce >= crushForceThreshold)
         {
-            Debug.LogWarning($"Object was crushed using {currentImpactForce} units of force.");
+            Debug.LogWarning($"{gameObject.name} was crushed using {currentImpactForce} units of force.");
             gameObject.SetActive(false);
         }
     }
